@@ -42,7 +42,7 @@ The following repo has been setup for a vagrant tech test.
 [![demo](https://asciinema.org/a/igxL4H6POcNEz8vh02FNa8vWR.png)](https://asciinema.org/a/igxL4H6POcNEz8vh02FNa8vWR?autoplay=1)
 
 ## Useful Urls
-Some convenience port forwards have been added for your convenience. 
+Some convenience port forwards have been added
 
 Service       | URL                   | User/Pass    |
 ------------- | --------------------- |------------- |
