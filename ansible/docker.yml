@@ -1,0 +1,60 @@
+---
+# Build our local containers
+- name: Build Docker images from Dockerfiles.
+  docker_image:
+    name: "{{ item.name }}"
+    tag: "{{ item.tag }}"
+    path: "/vagrant/ansible/{{ item.directory }}"
+    state: build
+    #docker_host: tcp://0.0.0.0:2376
+  with_items:
+    - { name: sonarqube, tag: "local-latest", directory: sonarqube }
+    - { name: jenkins, tag: "local-latest", directory: jenkins }
+
+# Run a Sonar container.
+- name: Run a Sonar container.
+  docker_container:
+    image: sonarqube:local-latest
+    name: sonarqube
+    state: started
+    ports: "9000:9000"
+    entrypoint: /opt/sonarqube/bin/run.sh
+    #docker_host: tcp://0.0.0.0:2376
+
+# Run a Jenkins container.
+- name: Run a Jenkins container
+  docker_container:
+    image: jenkins:local-latest
+    name: jenkins
+    state: started
+    ports: "8080:8080"
+    entrypoint: /sbin/tini -- /usr/local/bin/jenkins.sh 
+    env: {  JAVA_OPTS: -Djenkins.install.runSetupWizard=false }
+
+# Run a Selenium configuration container.
+- name: Run a selenoid config container
+  docker_container:
+    image: aerokube/cm:latest-release 
+    name: selenoid-config
+    state: present
+    privileged: true
+    volumes:
+      - /home/vagrant:/root
+      - /var/run/docker.sock:/var/run/docker.sock 
+    command: cm:latest-release selenoid configure [--browsers chrome] [--last-versions 1] [--tmpfs 128] 
+
+# Run The selenium hub
+- name: Run a selenoid hub
+  docker_container:
+    image: aerokube/cm:latest-release 
+    name: selenoid-hub
+    state: started
+    privileged: true
+    volumes:
+      - /home/vagrant:/root
+      - /var/run/docker.sock:/var/run/docker.sock 
+    command: cm:latest-release selenoid start --vnc
+    ports: 
+      - 8084:8080
+      - 4444:4444
+    env: {  OVERRIDE_HOME: /home/vagrant }

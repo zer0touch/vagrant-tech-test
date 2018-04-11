@@ -1,0 +1,35 @@
+---
+- include: setup-RedHat.yml
+  when: ansible_os_family == 'RedHat'
+
+- include: setup-Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- name: Install Docker.
+  package: name={{ docker_package }} state={{ docker_package_state }}
+
+- name: Ensure Docker is started and enabled at boot.
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Create docker.service systemd file
+  template:
+    src: docker.service.j2
+    dest: /lib/systemd/system/docker.service
+    owner: root
+    group: root
+    mode: 0644
+  #notify:
+  #  - reload systemd
+  #  - restart docker
+
+- name: reload systemd now
+  command: sudo systemctl daemon-reload
+
+- name: restart docker now
+  command: sudo systemctl restart docker.service
+
+- include: docker-compose.yml
+  when: docker_install_compose

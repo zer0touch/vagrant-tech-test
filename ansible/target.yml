@@ -1,0 +1,19 @@
+---
+- name: Setup environment to run the sample
+  hosts: all
+  remote_user: root
+  become:      yes
+
+  pre_tasks:
+    - name: Update apt cache if needed.
+      apt: update_cache=yes cache_valid_time=3600
+
+  roles:
+    - geerlingguy.docker
+
+  tasks:
+    - debug:
+        msg: task2
+    
+    - name: Setup base config for docker
+      import_tasks: setup.yml

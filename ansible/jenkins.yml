@@ -1,0 +1,26 @@
+---
+- name: Wait untils Jenkins web API is available
+  shell: curl -u "{{ jenkins_user }}":"{{ jenkins_pass }}" --head --silent http://localhost:8080/cli/
+  register: result
+  until: result.stdout.find("200 OK") != -1
+  retries: 20
+  delay: 5
+
+- name: Download CLI jar
+  get_url:
+    url: "http://localhost:8080/jnlpJars/jenkins-cli.jar"
+    dest: /opt/jenkins-cli.jar
+
+- name: Install plugin
+  shell: java -jar /opt/jenkins-cli.jar -s http://localhost:8080/ install-plugin --username {{ jenkins_user }} --password {{ jenkins_pass }} {{ item }}
+  with_items: 
+    - github
+    - golang
+
+- name: Create Jenkins Job
+  shell: cat /vagrant/ansible/{{ item }} | java -jar /opt/jenkins-cli.jar -s http://localhost:8080/ create-job helloworld --username {{ jenkins_user }} --password {{ jenkins_pass }} || echo "exists"
+  with_items: 
+    - job.xml
+
+- name: Run Jenkins Job
+  shell: curl -X POST -H $(curl -s 'http://admin:admin@localhost:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)') "http://admin:admin@localhost:8080/job/helloworld/build"

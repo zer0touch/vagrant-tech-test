@@ -1,0 +1,10 @@
+---
+- name: reload systemd
+  command: systemctl daemon-reload
+  become: yes
+  remote_user: root
+
+- name: restart docker
+  command: systemctl restart docker.service
+  become: yes
+  remote_user: root
